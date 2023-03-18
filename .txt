@@ -1,0 +1,20 @@
+// GITHUB Clear already tracked history - when you uploaded without .gitignore then add gitignore later
+git rm --cached .env
+git commit -m "stop tracking node modules"
+git push origin <branch name- main or master> --force
+
+git rm -rf --cached node_modules
+git commit -m "stop tracking node modules"
+git push origin main --force
+
+// login
+- access an existing user and add a token with a session
+- jwt will convert whole data into single token using a TOKEN_SECRET
+- database shouldn't store the token so login will include the token with response & send to the client (browser) as cookie using cookie-parser
+
+// updateUser
+- logged in user will send a update data request
+    // authenticate
+        - authenticate will check and verify the token stored in client cookie using TOKEN_SECRET
+        - if verified authenticate will decode the token into data and add user to the request (req.data = decode)
+        - then go for next middlewares
