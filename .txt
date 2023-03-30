@@ -1,3 +1,41 @@
+project/
+├── node_modules/
+├── public/
+│   ├── css/
+│   ├── img/
+│   └── js/
+├── routes/
+├── views/
+├── package.json
+└── server.js
+
+// Our 
+
+project/
+├── node_modules/
+├── src/
+│   ├── config/
+│   │   ├── lib/
+│   │   │   ├── app.js
+│   │   │   └── express.js
+│   │   └── index.js
+│   └── modules/
+│       ├── core/
+│       │   ├── middlewares/
+│       │   │   └── validate.js
+│       └── user/
+│           └── middlewares/
+│               ├── user-authenticate.js
+│               ├── user-controller.js
+│               ├── user-model.js
+│               ├── user-routes.js
+│               ├── user-schema.js
+│               └── user-strategy.js
+│   
+├── .env
+├── package.json
+└── server.js
+
 // GITHUB Clear already tracked history - when you uploaded without .gitignore then add gitignore later
 git rm --cached .env
 git commit -m "stop tracking node modules"
@@ -18,3 +56,5 @@ git push origin main --force
         - authenticate will check and verify the token stored in client cookie using TOKEN_SECRET
         - if verified authenticate will decode the token into data and add user to the request (req.data = decode)
         - then go for next middlewares
+
+

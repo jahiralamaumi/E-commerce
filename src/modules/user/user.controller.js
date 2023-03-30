@@ -1,25 +1,28 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const users = [];
+const User = require("./user.model.js");
 
-const createUser = (req, res) => {
-    const { firstName, lastName, email, password, confirmPassword } = req.body;
-    const hashedPassword = bcrypt.hashSync(password, 8);
+const createUser = async (req, res) => {
+    try {
+        const { firstName, lastName, email, password, confirmPassword } =
+            req.body;
 
-    const user = findUser(email); //  users.find( (user) => user.email === email );
+        const existUser = await User.findOne({ where: { email: email } });
 
-    if (user) return res.status(400).send("User already exists");
+        if (existUser) return res.status(400).send("User Already Exists");
 
-    const newUser = {
-        firstName,
-        lastName,
-        email,
-        password: hashedPassword,
-    };
-    users.push(newUser);
-    const modifiedUser = { ...newUser };
-    delete modifiedUser.password;
-    res.status(201).send(modifiedUser);
+        const user = await User.create({
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            password: password,
+        });
+
+        res.status(200).send(user);
+    } catch (error) {
+        res.status(500).send("Internal Server Error");
+    }
 };
 
 function login(req, res) {
