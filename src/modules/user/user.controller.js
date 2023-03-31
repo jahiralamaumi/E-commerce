@@ -1,9 +1,13 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const users = [];
+const {
+    tokenGenerator,
+    refreshTokenGenerator,
+} = require("./service/user.service.js");
+// const users = [];
 const User = require("./user.model.js");
 
-const createUser = async (req, res) => {
+const registerUser = async (req, res) => {
     try {
         const { firstName, lastName, email, password, confirmPassword } =
             req.body;
@@ -25,63 +29,99 @@ const createUser = async (req, res) => {
     }
 };
 
-function login(req, res) {
-    const { email, password } = req.body;
+async function login(req, res) {
+    try {
+        const { email, password } = req.body;
 
-    const user = users.find(
-        (user) =>
-            email === user.email && bcrypt.compareSync(password, user.password)
-    );
+        const user = await User.findOne({ where: { email } }); // exclude possible if needed
 
-    const token = jwt.sign(
-        {
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-        },
-        process.env.TOKEN_SECRET,
-        { expiresIn: "1h", issuer: user.email }
-    );
+        if (!user || !user.password || !user.validPassword(password)) {
+            return res.status(400).send("Authentication Error");
+        }
 
-    if (!user) return res.status(400).send("Incorrect credentials");
+        const token = tokenGenerator(user);
+        const refreshToken = refreshTokenGenerator(user);
 
-    res.cookie("access_token", token, {
-        httpOnly: true,
-    });
+        res.cookie("access_token", token, {
+            httpOnly: true,
+        });
 
-    const modifiedUser = { ...user };
-    delete modifiedUser.password;
+        res.cookie("refresh_token", refreshToken, {
+            httpOnly: true,
+        });
 
-    res.status(201).send(modifiedUser);
+        res.status(201).send(user);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-function findUser(email) {
-    return users.find((user) => email === user.email);
+async function updateUser(req, res) {
+    try {
+        const { firstName, lastName } = req.body;
+        const user = await User.findOne({ where: { email: req.user.email } });
+
+        if (!user) return res.status(400).send("User not found!");
+
+        if (firstName) user.update({ firstName }); //user.firstName = firstName;
+        if (lastName) user.update({ lastName }); //user.lastName = lastName;
+
+        await user.update({ update_by: req.user.email });
+
+        res.status(201).send(user);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-function getUsers(req, res) {
-    console.log(users);
-    res.status(201).send(users);
+function getSignedInUserProfile(req, res) {
+    return res.status(200).send(req.user);
 }
 
-const updateUser = (req, res) => {
-    const { firstName, lastName } = req.body;
-    const email = req.user.email;
+async function updatePassword(req, res) {
+    try {
+        const { password, newPassword } = req.body;
+        console.log("neeeeeeeeeew", newPassword);
+        const user = await User.findOne({ where: { id: req.user.id } });
 
-    const user = users.find((user) => user.email === email);
+        if (!user || !user.password || !user.validPassword(password)) {
+            return res.status(400).send("Password Wrong");
+        }
 
-    if (!user) return res.status(400).send("User not found!");
+        await user.update({ password: newPassword });
 
-    user.firstName = firstName;
-    user.lastName = lastName;
-    const modifiedUser = { ...user };
+        return res.status(200).send("Password Successfully Updated");
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+    }
+}
 
-    delete modifiedUser.password;
+async function logout(req, res) {
+    res.clearCookie("access_token");
+    return res.status(200).send("Logout Successful");
+}
 
-    res.status(201).send(modifiedUser);
-};
+async function findUser(email) {
+    const user = await User.findOne({ where: { email } });
+    return user;
+}
 
-const deleteUser = (req, res) => {
+async function getUsers(req, res) {
+    try {
+        const users = await User.findAll({
+            attributes: { exclude: ["password"] },
+        });
+        res.status(200).send(users);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+    }
+}
+
+async function deleteUser(req, res) {
     const email = req.params.email;
     const user = users.find((user) => user.email === email);
 
@@ -90,11 +130,14 @@ const deleteUser = (req, res) => {
     const userIndex = users.findIndex((user) => user.email === email);
     const deletedUser = users.splice(userIndex, 1);
     res.status(201).send(deletedUser);
-};
+}
 
-module.exports.createUser = createUser;
+module.exports.registerUser = registerUser;
 module.exports.login = login;
+module.exports.updateUser = updateUser;
+module.exports.getSignedInUserProfile = getSignedInUserProfile;
+module.exports.updatePassword = updatePassword;
+module.exports.logout = logout;
 module.exports.findUser = findUser;
 module.exports.getUsers = getUsers;
-module.exports.updateUser = updateUser;
 module.exports.deleteUser = deleteUser;

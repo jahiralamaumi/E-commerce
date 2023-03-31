@@ -5,8 +5,7 @@ const { findUser } = require("./user.controller");
 module.exports = function () {
     function cookieExtractor(req) {
         let token = null;
-        if (req && req.signedCookies)
-            token = req.headers.authorization.split(" ")[1];
+        if (req && req.signedCookies) token = req.cookies["access_token"];
         return token;
     }
 
@@ -17,10 +16,15 @@ module.exports = function () {
                 secretOrKey: process.env.TOKEN_SECRET,
                 jwtFromRequest: cookieExtractor,
             },
-            function (payload, done) {
-                const user = findUser(payload.email);
-                if (user) return done(null, user);
-                done(null, false);
+            async function (payload, done) {
+                try {
+                    const user = await findUser(payload.email);
+                    if (user) return done(null, user);
+                    done(null, false);
+                } catch (err) {
+                    console.log(err);
+                    res.status(500).send("Internal Server Error");
+                }
             }
         )
     );

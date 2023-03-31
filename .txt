@@ -1,3 +1,20 @@
+// TO-Do
+
+├─ login ✓
+├─ sign up ✓
+├─ forget password
+├─ change password ✓
+├─ refresh token ✓
+├─ email sending (optional)
+├─ profile update ✓
+├─ create a users table : id, first_name, last_name, email, password, profile (null), created_by, updated_by, created_at, updated_at ✓
+
+
+
+
+
+
+
 project/
 ├── node_modules/
 ├── public/
@@ -56,5 +73,6 @@ git push origin main --force
         - authenticate will check and verify the token stored in client cookie using TOKEN_SECRET
         - if verified authenticate will decode the token into data and add user to the request (req.data = decode)
         - then go for next middlewares
+
 
 

@@ -1,8 +1,6 @@
 const path = require("path");
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const userRoutes = require("../../modules/user/user.routes");
-const userStrategy = require("../../modules/user/user.strategy");
 
 const config = require("../index");
 

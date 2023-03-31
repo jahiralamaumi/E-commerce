@@ -1,25 +1,50 @@
 const path = require("path");
 const { AuthStrategy } = require("./user-authentication.middleware");
 const {
-    createUser,
+    registerUser,
     login,
+    getSignedInUserProfile,
     getUsers,
     updateUser,
     deleteUser,
+    updatePassword,
+    logout,
 } = require("./user.controller");
-const { createUserSchema, updateUserSchema } = require("./user.schema");
+const {
+    registerUserSchema,
+    loginSchema,
+    updateUserSchema,
+    updatePasswordSchema,
+} = require("./user.schema");
 const { validate } = require(path.join(
     process.cwd(),
     "/src/modules/core/middlewares/validate"
 ));
 
 module.exports = function userRoutes(app) {
-    app.route("/users")
-        .get(getUsers)
-        .post(validate(createUserSchema), createUser)
-        .patch(AuthStrategy, validate(updateUserSchema), updateUser);
+    app.route("/register").post(validate(registerUserSchema), registerUser);
 
-    app.post("/users/login", login);
+    app.route("/login").post(validate(loginSchema), login);
+
+    app.route("/me").get(AuthStrategy, getSignedInUserProfile);
+
+    app.route("/update-user").patch(
+        AuthStrategy,
+        validate(updateUserSchema),
+        updateUser
+    );
+
+    app.route("/update-password").patch(
+        AuthStrategy,
+        validate(updatePasswordSchema),
+        updatePassword
+    );
+
+    app.route("/logout").post(AuthStrategy, logout);
+
+    // app.route("/token").post(AuthStrategy, generateRefreshToken);
+
+    app.route("/users").get(getUsers);
 
     app.route("/users/:email").delete(deleteUser);
 };

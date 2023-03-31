@@ -1,7 +1,7 @@
 const yup = require("yup");
 
 // Create User Schema Model
-const createUserSchema = yup.object().shape({
+const registerUserSchema = yup.object().shape({
     firstName: yup
         .string()
         .min(2, "Must be at least two characters.")
@@ -30,6 +30,19 @@ const createUserSchema = yup.object().shape({
         ),
 });
 
+// Login schema model
+const loginSchema = yup.object().shape({
+    email: yup
+        .string()
+        .email("This field should be a valid email address")
+        .max(100, "Email must be at most 100 characters long")
+        .required("Email field is required"),
+    password: yup
+        .string()
+        .max(50, "Password should be at most 50 characters long")
+        .required("Password field is required"),
+});
+
 // Update user schema model ( Only firstname & lastname )
 const updateUserSchema = yup.object().shape({
     firstName: yup
@@ -44,5 +57,26 @@ const updateUserSchema = yup.object().shape({
         .required("Last Name is required"),
 });
 
-module.exports.createUserSchema = createUserSchema;
+// Update Password schema
+const updatePasswordSchema = yup.object().shape({
+    password: yup
+        .string()
+        .max(50, "Old Password must be less than 50 chars")
+        .required("Old Password Required"),
+    newPassword: yup
+        .string()
+        .max(50, "Password should be at most 50 characters long")
+        .required("Password field is required"),
+    confirmNewPassword: yup
+        .string()
+        .required("Confirm new password is required")
+        .oneOf(
+            [yup.ref("newPassword"), null],
+            "New Password and Confirm new password must be matched"
+        ),
+});
+
+module.exports.registerUserSchema = registerUserSchema;
+module.exports.loginSchema = loginSchema;
 module.exports.updateUserSchema = updateUserSchema;
+module.exports.updatePasswordSchema = updatePasswordSchema;
