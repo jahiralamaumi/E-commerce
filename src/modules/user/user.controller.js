@@ -3,8 +3,8 @@ const jwt = require("jsonwebtoken");
 const {
     tokenGenerator,
     refreshTokenGenerator,
+    sendPasswordResetEmail,
 } = require("./service/user.service.js");
-// const users = [];
 const User = require("./user.model.js");
 
 const registerUser = async (req, res) => {
@@ -104,6 +104,49 @@ async function logout(req, res) {
     return res.status(200).send("Logout Successful");
 }
 
+async function requestResetPassword(req, res) {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) return res.status(404).send("User Not Found!");
+
+        const resetToken = await user.generateResetToken();
+        await user.save();
+
+        const resetUrl = `${process.env.BASE_URL}/reset-password/${resetToken}`;
+
+        await sendPasswordResetEmail(user.email, resetUrl);
+
+        res.status(200).send("Email Sent");
+    } catch (err) {
+        res.status(500).send("Internal Server Error");
+    }
+}
+
+async function handleResetPasswordRequest(req, res) {
+    const { token } = req.params;
+    const { newPassword, confirmNewPassword } = req.body;
+
+    try {
+        // Find user by reset token
+        const user = await User.findOne({ where: { resetToken: token } });
+
+        if (!user || !user.isResetTokenValid(user.resetTokenExpiry))
+            return res.status(400).send("Invalid Reset Token");
+
+        user.password = newPassword;
+        user.resetToken = null;
+
+        await user.save();
+
+        res.status(200).send("Password Reset Successful!");
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send("Internal server error");
+    }
+}
+
 async function findUser(email) {
     const user = await User.findOne({ where: { email } });
     return user;
@@ -138,6 +181,8 @@ module.exports.updateUser = updateUser;
 module.exports.getSignedInUserProfile = getSignedInUserProfile;
 module.exports.updatePassword = updatePassword;
 module.exports.logout = logout;
+module.exports.requestResetPassword = requestResetPassword;
+module.exports.handleResetPasswordRequest = handleResetPasswordRequest;
 module.exports.findUser = findUser;
 module.exports.getUsers = getUsers;
 module.exports.deleteUser = deleteUser;

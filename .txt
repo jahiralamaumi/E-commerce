@@ -1,5 +1,6 @@
 // TO-Do
 
+User Management
 ├─ login ✓
 ├─ sign up ✓
 ├─ forget password
@@ -10,6 +11,12 @@
 ├─ create a users table : id, first_name, last_name, email, password, profile (null), created_by, updated_by, created_at, updated_at ✓
 
 
+Service Management
+├─ create a database table "services". columns: id, name, description, created_by, updated_by created_at, updated_at ✓
+├─ insert some services ✓
+├─ create a route to get all the services by super admin ✓
+├─ route, controller, model ✓
+├─ create a route to get a single service by id ✓
 
 
 

@@ -76,7 +76,23 @@ const updatePasswordSchema = yup.object().shape({
         ),
 });
 
+// Reset Password schema
+const resetPasswordSchema = yup.object().shape({
+    newPassword: yup
+        .string()
+        .max(50, "Password should be at most 50 characters long")
+        .required("Password field is required"),
+    confirmNewPassword: yup
+        .string()
+        .required("Confirm new password is required")
+        .oneOf(
+            [yup.ref("newPassword"), null],
+            "New Password and Confirm new password must be matched"
+        ),
+});
+
 module.exports.registerUserSchema = registerUserSchema;
 module.exports.loginSchema = loginSchema;
 module.exports.updateUserSchema = updateUserSchema;
 module.exports.updatePasswordSchema = updatePasswordSchema;
+module.exports.resetPasswordSchema = resetPasswordSchema;

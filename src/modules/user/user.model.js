@@ -53,6 +53,8 @@ const User = sequelize.define(
             allowNull: true,
             type: DataTypes.UUID,
         },
+        resetToken: { type: DataTypes.STRING, allowNull: true },
+        resetTokenExpiry: { type: DataTypes.DATE, allowNull: true },
     },
     {
         tableName: "users",
@@ -66,4 +68,22 @@ User.prototype.validPassword = function (password) {
     return bcrypt.compareSync(password, this.password);
 };
 
+// Adding a new method to the User model to generate a reset token
+User.prototype.generateResetToken = function () {
+    const token = bcrypt.hashSync(
+        process.env.TOKEN_SECRET,
+        Math.floor(Math.random() * (10 - 7) + 7)
+    );
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // Token Expires in 24 hours
+    this.resetToken = token;
+    this.resetTokenExpiry = tokenExpiry;
+    return token;
+};
+
+// Check resetToken Expiration & Validation
+User.prototype.isResetTokenValid = function (resetTokenExpiry) {
+    if (!resetTokenExpiry) return false; // reset token expiry field is not set
+
+    return resetTokenExpiry.getTime() > Date.now(); // check if reset token expiry time has passed
+};
 module.exports = User;

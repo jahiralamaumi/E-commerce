@@ -9,12 +9,15 @@ const {
     deleteUser,
     updatePassword,
     logout,
+    requestResetPassword,
+    handleResetPasswordRequest,
 } = require("./user.controller");
 const {
     registerUserSchema,
     loginSchema,
     updateUserSchema,
     updatePasswordSchema,
+    resetPasswordSchema,
 } = require("./user.schema");
 const { validate } = require(path.join(
     process.cwd(),
@@ -41,6 +44,13 @@ module.exports = function userRoutes(app) {
     );
 
     app.route("/logout").post(AuthStrategy, logout);
+
+    app.route("/reset-password").post(requestResetPassword);
+
+    app.route("/reset-password/:token").post(
+        validate(resetPasswordSchema),
+        handleResetPasswordRequest
+    );
 
     // app.route("/token").post(AuthStrategy, generateRefreshToken);
 
