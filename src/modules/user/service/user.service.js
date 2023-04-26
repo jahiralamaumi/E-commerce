@@ -1,21 +1,35 @@
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 
-function tokenGenerator(data) {
+function accessTokenGenerator(data) {
     return jwt.sign(
-        {
-            id: data.id,
-            email: data.email,
-        },
+        // {
+        //     id: data.id,
+        //     email: data.email,
+        // }
+        data,
         process.env.TOKEN_SECRET,
         { expiresIn: "4h", issuer: data.email }
     );
 }
 
 function refreshTokenGenerator(data) {
-    return jwt.sign({ id: data.id }, process.env.TOKEN_SECRET, {
+    return jwt.sign(data, process.env.TOKEN_SECRET, {
         issuer: data.email,
     });
+}
+
+function setTokenCookies(res, accessToken, refreshToken) {
+    const options = {
+        httpOnly: true,
+        // secure: true, // set to true if using https
+        // sameSite: 'strict'
+    };
+
+    const authHeader = `Bearer ${accessToken}`;
+    res.setHeader("Authorization", authHeader);
+    res.cookie("access_token", accessToken, options);
+    res.cookie("refresh_token", refreshToken, options);
 }
 
 async function sendPasswordResetEmail(userEmail, resetUrl) {
@@ -45,6 +59,7 @@ async function sendPasswordResetEmail(userEmail, resetUrl) {
     });
 }
 
-module.exports.tokenGenerator = tokenGenerator;
+module.exports.accessTokenGenerator = accessTokenGenerator;
 module.exports.refreshTokenGenerator = refreshTokenGenerator;
+module.exports.setTokenCookies = setTokenCookies;
 module.exports.sendPasswordResetEmail = sendPasswordResetEmail;

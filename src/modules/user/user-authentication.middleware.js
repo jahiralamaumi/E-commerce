@@ -19,4 +19,24 @@ function AuthStrategy(req, res, next) {
     auth(req, res, next);
 }
 
+// function verifyRefreshToken(req, res, next) {
+//     const token = req.cookies.refresh_token;
+//     if (!token) {
+//         return res.sendStatus(401);
+//     }
+
+//     jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+//         if (err) {
+//             return res.sendStatus(403);
+//         }
+
+//         const accessToken = generateAccessToken({ id: user.id });
+//         setTokenCookies(res, accessToken, token);
+
+//         req.user = user;
+//         next();
+//     });
+// }
+
 module.exports.AuthStrategy = AuthStrategy;
+// module.exports.verifyRefreshToken = verifyRefreshToken;

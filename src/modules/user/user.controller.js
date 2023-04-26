@@ -1,11 +1,13 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const {
-    tokenGenerator,
+    accessTokenGenerator,
     refreshTokenGenerator,
+    setTokenCookies,
     sendPasswordResetEmail,
 } = require("./service/user.service.js");
 const User = require("./user.model.js");
+const RefreshToken = require("./user.model.js");
 
 const registerUser = async (req, res) => {
     try {
@@ -33,22 +35,21 @@ async function login(req, res) {
     try {
         const { email, password } = req.body;
 
+        // Check if the user exists and the password is correct
         const user = await User.findOne({ where: { email } }); // exclude possible if needed
 
         if (!user || !user.password || !user.validPassword(password)) {
             return res.status(400).send("Authentication Error");
         }
 
-        const token = tokenGenerator(user);
-        const refreshToken = refreshTokenGenerator(user);
+        const accessToken = accessTokenGenerator({ id: user.id });
+        const refreshToken = refreshTokenGenerator({ id: user.id });
 
-        res.cookie("access_token", token, {
-            httpOnly: true,
-        });
+        // Save the refresh token in database
+        user.refreshToken = refreshToken;
+        await user.save();
 
-        res.cookie("refresh_token", refreshToken, {
-            httpOnly: true,
-        });
+        setTokenCookies(res, accessToken, refreshToken);
 
         res.status(201).send(user);
     } catch (error) {
@@ -147,6 +148,41 @@ async function handleResetPasswordRequest(req, res) {
     }
 }
 
+async function handleRefreshTokenRequest(req, res) {
+    const { refreshToken } = req.body;
+
+    // Check if refresh token exists
+    const tokenExists = await RefreshToken.findOne({
+        where: { token: refreshToken },
+    });
+    if (!tokenExists) {
+        return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    try {
+        // Verify the refresh token
+        const decoded = jwt.verify(refreshToken, process.env.TOKEN_SECRET);
+
+        // Check if the user exists
+        const user = await User.findOne({ where: { id: decoded.id } });
+        if (!user) {
+            return res.status(401).json({ message: "Invalid refresh token" });
+        }
+
+        // Create a new access token
+        const accessToken = jwt.sign(
+            { id: user.id },
+            process.env.TOKEN_SECRET,
+            { expiresIn: "15m" }
+        );
+
+        // Send the new access token to the client
+        res.json({ accessToken });
+    } catch (err) {
+        return res.status(401).json({ message: "Invalid refresh token" });
+    }
+}
+
 async function findUser(email) {
     const user = await User.findOne({ where: { email } });
     return user;
@@ -183,6 +219,7 @@ module.exports.updatePassword = updatePassword;
 module.exports.logout = logout;
 module.exports.requestResetPassword = requestResetPassword;
 module.exports.handleResetPasswordRequest = handleResetPasswordRequest;
+module.exports.handleRefreshTokenRequest = handleRefreshTokenRequest;
 module.exports.findUser = findUser;
 module.exports.getUsers = getUsers;
 module.exports.deleteUser = deleteUser;
