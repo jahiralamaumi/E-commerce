@@ -9,14 +9,12 @@ function accessTokenGenerator(data) {
         // }
         data,
         process.env.TOKEN_SECRET,
-        { expiresIn: "4h", issuer: data.email }
+        { expiresIn: "4h" /*issuer: data.id */ }
     );
 }
 
 function refreshTokenGenerator(data) {
-    return jwt.sign(data, process.env.TOKEN_SECRET, {
-        issuer: data.email,
-    });
+    return jwt.sign(data, process.env.TOKEN_SECRET, {});
 }
 
 function setTokenCookies(res, accessToken, refreshToken) {

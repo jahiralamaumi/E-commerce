@@ -100,5 +100,5 @@ const RefreshToken = sequelize.define("RefreshToken", {
     },
 });
 
-module.exports = User;
-module.exports = RefreshToken;
+module.exports.User = User;
+module.exports.RefreshToken = RefreshToken;

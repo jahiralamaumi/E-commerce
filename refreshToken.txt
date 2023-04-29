@@ -1,0 +1,11 @@
+To implement refresh tokens in your project, you can follow these steps:
+
+1. Generate a refresh token and store it in the database when a user logs in. You can use a library like jsonwebtoken to generate the token.
+
+2. Send the refresh token to the client as a HTTP-only cookie. You can use the cookie-parser middleware to parse cookies.
+
+3. When the access token expires, the client can send a request to a endpoint to get a new access token using the refresh token. The /refresh-token endpoint should check if the refresh token is valid and if it matches the one stored in the database.
+
+4. If the refresh token is valid, generate a new access token and return it to the client.
+
+Here's an example of how you can implement the /refresh-token endpoint in your user-controller.js file:

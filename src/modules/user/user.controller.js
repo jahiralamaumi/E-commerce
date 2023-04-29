@@ -6,8 +6,7 @@ const {
     setTokenCookies,
     sendPasswordResetEmail,
 } = require("./service/user.service.js");
-const User = require("./user.model.js");
-const RefreshToken = require("./user.model.js");
+const { User, RefreshToken } = require("./user.model.js");
 
 const registerUser = async (req, res) => {
     try {
@@ -46,6 +45,7 @@ async function login(req, res) {
         const refreshToken = refreshTokenGenerator({ id: user.id });
 
         // Save the refresh token in database
+        await RefreshToken.create({ token: refreshToken });
         user.refreshToken = refreshToken;
         await user.save();
 
@@ -101,6 +101,13 @@ async function updatePassword(req, res) {
 }
 
 async function logout(req, res) {
+    const refreshToken = null;
+    if (req && req.signedCookies) refreshToken = req.cookies["refresh_token"];
+
+    // Delete the refresh token from the database
+    await RefreshToken.destroy({ where: { token: refreshToken } });
+    res.sendStatus(204);
+
     res.clearCookie("access_token");
     return res.status(200).send("Logout Successful");
 }
@@ -149,7 +156,9 @@ async function handleResetPasswordRequest(req, res) {
 }
 
 async function handleRefreshTokenRequest(req, res) {
-    const { refreshToken } = req.body;
+    // const { refreshToken } = req.body;
+    const refreshToken = null;
+    if (req && req.signedCookies) refreshToken = req.cookies["refresh_token"];
 
     // Check if refresh token exists
     const tokenExists = await RefreshToken.findOne({
@@ -177,7 +186,8 @@ async function handleRefreshTokenRequest(req, res) {
         );
 
         // Send the new access token to the client
-        res.json({ accessToken });
+        // res.json({ accessToken });
+        setTokenCookies(res, accessToken, refreshToken);
     } catch (err) {
         return res.status(401).json({ message: "Invalid refresh token" });
     }
